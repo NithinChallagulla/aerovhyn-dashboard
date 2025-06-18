@@ -1,53 +1,80 @@
-let map;
-
 function initMap() {
-  // Try to get user's current location
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const userLat = position.coords.latitude;
-      const userLng = position.coords.longitude;
-      const userLocation = { lat: userLat, lng: userLng };
+  const userLocation = { lat: 16.5028, lng: 80.6506 };
 
-      // Create map centered at user's location
-      map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 10,
-        center: userLocation,
-      });
+  const map = new google.maps.Map(document.getElementById("map"), {
+    center: userLocation,
+    zoom: 10,
+    styles: [ // Dark Mode Style
+      { elementType: "geometry", stylers: [{ color: "#212121" }] },
+      { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+      { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#757575" }] },
+      { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#181818" }] },
+      { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+      { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#2c2c2c" }] },
+      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
+      { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#373737" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#3c3c3c" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] },
+      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d3d3d" }] },
+    ],
+  });
 
-      // Marker for user's location
-      new google.maps.Marker({
-        position: userLocation,
-        map,
-        title: "You are here",
-        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-      });
-
-      // Generate and add 10 random markers within 50 km
-      for (let i = 0; i < 10; i++) {
-        const randomPos = generateRandomLocation(userLat, userLng, 50);
-        new google.maps.Marker({
-          position: randomPos,
-          map,
-          title: `Random Marker ${i + 1}`,
-        });
-      }
+  // Add a marker for the user location
+  new google.maps.Marker({
+    position: userLocation,
+    map: map,
+    title: "Your Location",
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 8,
+      fillColor: "#00ffcc",
+      fillOpacity: 1,
+      strokeWeight: 2,
+      strokeColor: "#ffffff",
     },
-    (error) => {
-      console.error("Geolocation failed:", error.message);
-    }
-  );
-}
+  });
 
-// Generate a random lat/lng within given km radius
-function generateRandomLocation(lat, lng, radiusKm) {
-  const radiusInDegrees = radiusKm / 111; // Approximation
+  // Generate 10 random markers within 50km
+  const randomMarkers = 10;
+  const radiusInKm = 50;
 
-  const u = Math.random();
-  const v = Math.random();
-  const w = radiusInDegrees * Math.sqrt(u);
-  const t = 2 * Math.PI * v;
-  const newLat = lat + w * Math.cos(t);
-  const newLng = lng + w * Math.sin(t) / Math.cos((lat * Math.PI) / 180);
+  for (let i = 0; i < randomMarkers; i++) {
+    const randomPoint = generateRandomLocation(userLocation, radiusInKm);
+    new google.maps.Marker({
+      position: randomPoint,
+      map: map,
+      icon: {
+        path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+        scale: 5,
+        fillColor: "#ff4081",
+        fillOpacity: 0.9,
+        strokeWeight: 1,
+        strokeColor: "#ffffff",
+      },
+      title: `Random Marker ${i + 1}`,
+    });
+  }
 
-  return { lat: newLat, lng: newLng };
+  function generateRandomLocation(center, radiusKm) {
+    const y0 = center.lat;
+    const x0 = center.lng;
+    const rd = radiusKm / 111; // Approx radius in degrees
+
+    const u = Math.random();
+    const v = Math.random();
+
+    const w = rd * Math.sqrt(u);
+    const t = 2 * Math.PI * v;
+
+    const x = w * Math.cos(t);
+    const y = w * Math.sin(t);
+
+    const newLat = y + y0;
+    const newLng = x + x0;
+
+    return { lat: newLat, lng: newLng };
+  }
 }
