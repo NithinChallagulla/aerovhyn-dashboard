@@ -1,4 +1,4 @@
-// main.js
+// Firebase via CDN
 const firebaseConfig = {
   apiKey: "AIzaSyDooJlQCfk104yS4XzOj1bgpVEoOB8rTnQ",
   authDomain: "webrtc-demo-33437.firebaseapp.com",
@@ -9,9 +9,11 @@ const firebaseConfig = {
   measurementId: "G-H2KFF0EHS0"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const firestore = firebase.firestore();
 
+// RTC setup remains same
 const servers = {
   iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }],
   iceCandidatePoolSize: 10,
@@ -21,6 +23,7 @@ const pc = new RTCPeerConnection(servers);
 let localStream = null;
 let remoteStream = null;
 
+// HTML elements
 const webcamButton = document.getElementById('webcamButton');
 const webcamVideo = document.getElementById('webcamVideo');
 const callButton = document.getElementById('callButton');
@@ -29,41 +32,9 @@ const answerButton = document.getElementById('answerButton');
 const remoteVideo = document.getElementById('remoteVideo');
 const hangupButton = document.getElementById('hangupButton');
 
-const muteToggle = document.getElementById('muteToggle');
-const volumeSlider = document.getElementById('volumeSlider');
-const audioInput = document.getElementById('audioInput');
-const audioOutput = document.getElementById('audioOutput');
-const videoInput = document.getElementById('videoInput');
-
-const webcamStatus = document.getElementById('webcamStatus');
-const remoteStatus = document.getElementById('remoteStatus');
-
-async function listMediaDevices() {
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  audioInput.innerHTML = '';
-  audioOutput.innerHTML = '';
-  videoInput.innerHTML = '';
-
-  devices.forEach(device => {
-    const option = document.createElement('option');
-    option.value = device.deviceId;
-    option.text = device.label || `${device.kind}`;
-
-    if (device.kind === 'audioinput') audioInput.appendChild(option);
-    if (device.kind === 'audiooutput') audioOutput.appendChild(option);
-    if (device.kind === 'videoinput') videoInput.appendChild(option);
-  });
-}
-
+// Webcam start
 webcamButton.onclick = async () => {
-  await listMediaDevices();
-
-  const constraints = {
-    video: { deviceId: videoInput.value ? { exact: videoInput.value } : undefined },
-    audio: { deviceId: audioInput.value ? { exact: audioInput.value } : undefined },
-  };
-  
-  localStream = await navigator.mediaDevices.getUserMedia(constraints);
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   remoteStream = new MediaStream();
 
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
@@ -78,14 +49,9 @@ webcamButton.onclick = async () => {
   callButton.disabled = false;
   answerButton.disabled = false;
   webcamButton.disabled = true;
-  webcamStatus.textContent = 'Webcam: ✅';
-
-  muteToggle.onchange = () => {
-    localStream.getAudioTracks().forEach(track => track.enabled = !muteToggle.checked);
-  };
-  volumeSlider.oninput = () => remoteVideo.volume = volumeSlider.value;
 };
 
+// Create call
 callButton.onclick = async () => {
   const callDoc = firestore.collection('calls').doc();
   const offerCandidates = callDoc.collection('offerCandidates');
@@ -94,7 +60,9 @@ callButton.onclick = async () => {
   callInput.value = callDoc.id;
 
   pc.onicecandidate = event => {
-    if (event.candidate) offerCandidates.add(event.candidate.toJSON());
+    if (event.candidate) {
+      offerCandidates.add(event.candidate.toJSON());
+    }
   };
 
   const offerDescription = await pc.createOffer();
@@ -106,19 +74,21 @@ callButton.onclick = async () => {
     const data = snapshot.data();
     if (!pc.currentRemoteDescription && data?.answer) {
       pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-      remoteStatus.textContent = 'Remote: ✅';
     }
   });
 
   answerCandidates.onSnapshot(snapshot => {
     snapshot.docChanges().forEach(change => {
-      if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+      if (change.type === 'added') {
+        pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+      }
     });
   });
 
   hangupButton.disabled = false;
 };
 
+// Answer call
 answerButton.onclick = async () => {
   const callId = callInput.value;
   const callDoc = firestore.collection('calls').doc(callId);
@@ -126,7 +96,9 @@ answerButton.onclick = async () => {
   const offerCandidates = callDoc.collection('offerCandidates');
 
   pc.onicecandidate = event => {
-    if (event.candidate) answerCandidates.add(event.candidate.toJSON());
+    if (event.candidate) {
+      answerCandidates.add(event.candidate.toJSON());
+    }
   };
 
   const callData = (await callDoc.get()).data();
@@ -139,8 +111,9 @@ answerButton.onclick = async () => {
 
   offerCandidates.onSnapshot(snapshot => {
     snapshot.docChanges().forEach(change => {
-      if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+      if (change.type === 'added') {
+        pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+      }
     });
   });
-  remoteStatus.textContent = 'Remote: ✅';
 };
