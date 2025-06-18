@@ -1,4 +1,4 @@
-// Updated main.js with advanced video chat controls and status panel
+// main.js
 const firebaseConfig = {
   apiKey: "AIzaSyDooJlQCfk104yS4XzOj1bgpVEoOB8rTnQ",
   authDomain: "webrtc-demo-33437.firebaseapp.com",
@@ -28,24 +28,41 @@ const callInput = document.getElementById('callInput');
 const answerButton = document.getElementById('answerButton');
 const remoteVideo = document.getElementById('remoteVideo');
 const hangupButton = document.getElementById('hangupButton');
-const muteButton = document.getElementById('muteButton');
-const volumeSlider = document.getElementById('volumeSlider');
-const audioSelect = document.getElementById('audioSelect');
-const videoSelect = document.getElementById('videoSelect');
-const speakerSelect = document.getElementById('speakerSelect');
-const statusPanel = document.getElementById('statusPanel');
 
-let isMuted = false;
+const muteToggle = document.getElementById('muteToggle');
+const volumeSlider = document.getElementById('volumeSlider');
+const audioInput = document.getElementById('audioInput');
+const audioOutput = document.getElementById('audioOutput');
+const videoInput = document.getElementById('videoInput');
+
+const webcamStatus = document.getElementById('webcamStatus');
+const remoteStatus = document.getElementById('remoteStatus');
+
+async function listMediaDevices() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  audioInput.innerHTML = '';
+  audioOutput.innerHTML = '';
+  videoInput.innerHTML = '';
+
+  devices.forEach(device => {
+    const option = document.createElement('option');
+    option.value = device.deviceId;
+    option.text = device.label || `${device.kind}`;
+
+    if (device.kind === 'audioinput') audioInput.appendChild(option);
+    if (device.kind === 'audiooutput') audioOutput.appendChild(option);
+    if (device.kind === 'videoinput') videoInput.appendChild(option);
+  });
+}
 
 webcamButton.onclick = async () => {
-  const audioSource = audioSelect.value;
-  const videoSource = videoSelect.value;
+  await listMediaDevices();
 
   const constraints = {
-    video: { deviceId: videoSource ? { exact: videoSource } : undefined },
-    audio: { deviceId: audioSource ? { exact: audioSource } : undefined },
+    video: { deviceId: videoInput.value ? { exact: videoInput.value } : undefined },
+    audio: { deviceId: audioInput.value ? { exact: audioInput.value } : undefined },
   };
-
+  
   localStream = await navigator.mediaDevices.getUserMedia(constraints);
   remoteStream = new MediaStream();
 
@@ -61,20 +78,23 @@ webcamButton.onclick = async () => {
   callButton.disabled = false;
   answerButton.disabled = false;
   webcamButton.disabled = true;
+  webcamStatus.textContent = 'Webcam: ✅';
 
-  updateStatus();
+  muteToggle.onchange = () => {
+    localStream.getAudioTracks().forEach(track => track.enabled = !muteToggle.checked);
+  };
+  volumeSlider.oninput = () => remoteVideo.volume = volumeSlider.value;
 };
 
 callButton.onclick = async () => {
   const callDoc = firestore.collection('calls').doc();
   const offerCandidates = callDoc.collection('offerCandidates');
   const answerCandidates = callDoc.collection('answerCandidates');
+
   callInput.value = callDoc.id;
 
   pc.onicecandidate = event => {
-    if (event.candidate) {
-      offerCandidates.add(event.candidate.toJSON());
-    }
+    if (event.candidate) offerCandidates.add(event.candidate.toJSON());
   };
 
   const offerDescription = await pc.createOffer();
@@ -86,19 +106,17 @@ callButton.onclick = async () => {
     const data = snapshot.data();
     if (!pc.currentRemoteDescription && data?.answer) {
       pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      remoteStatus.textContent = 'Remote: ✅';
     }
   });
 
   answerCandidates.onSnapshot(snapshot => {
     snapshot.docChanges().forEach(change => {
-      if (change.type === 'added') {
-        pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-      }
+      if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
     });
   });
 
   hangupButton.disabled = false;
-  updateStatus();
 };
 
 answerButton.onclick = async () => {
@@ -108,9 +126,7 @@ answerButton.onclick = async () => {
   const offerCandidates = callDoc.collection('offerCandidates');
 
   pc.onicecandidate = event => {
-    if (event.candidate) {
-      answerCandidates.add(event.candidate.toJSON());
-    }
+    if (event.candidate) answerCandidates.add(event.candidate.toJSON());
   };
 
   const callData = (await callDoc.get()).data();
@@ -123,55 +139,8 @@ answerButton.onclick = async () => {
 
   offerCandidates.onSnapshot(snapshot => {
     snapshot.docChanges().forEach(change => {
-      if (change.type === 'added') {
-        pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-      }
+      if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
     });
   });
-
-  updateStatus();
-};
-
-hangupButton.onclick = () => {
-  pc.close();
-  localStream.getTracks().forEach(track => track.stop());
-  webcamVideo.srcObject = null;
-  remoteVideo.srcObject = null;
-  callInput.value = '';
-  webcamButton.disabled = false;
-  callButton.disabled = true;
-  answerButton.disabled = true;
-  hangupButton.disabled = true;
-  updateStatus('Disconnected');
-};
-
-muteButton.onclick = () => {
-  isMuted = !isMuted;
-  localStream.getAudioTracks()[0].enabled = !isMuted;
-  muteButton.innerText = isMuted ? '🔇 Unmute' : '🔊 Mute';
-};
-
-volumeSlider.oninput = () => {
-  remoteVideo.volume = volumeSlider.value;
-};
-
-navigator.mediaDevices.enumerateDevices().then(devices => {
-  devices.forEach(device => {
-    const option = document.createElement('option');
-    option.value = device.deviceId;
-    option.text = device.label || device.kind;
-
-    if (device.kind === 'audioinput') audioSelect.appendChild(option);
-    else if (device.kind === 'videoinput') videoSelect.appendChild(option);
-    else if (device.kind === 'audiooutput') speakerSelect.appendChild(option);
-  });
-});
-
-function updateStatus(msg = 'Connected') {
-  statusPanel.innerText = `${msg} | Local: ${localStream ? '🟢' : '🔴'} | Remote: ${remoteVideo.srcObject ? '🟢' : '🔴'}`;
-}
-
-// Optional: handle device change
-navigator.mediaDevices.ondevicechange = () => {
-  console.log("Device change detected. You may need to refresh device list.");
+  remoteStatus.textContent = 'Remote: ✅';
 };
