@@ -7,27 +7,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
-  <script type="module" src="main.js" defer></script>
+
+  <!-- ✅ Firebase SDK via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- ✅ Your Scripts -->
+  <script src="main.js" defer></script>
   <script src="map.js" defer></script>
 </head>
 <body>
   <header>AEROVHYN DASHBOARD</header>
 
   <div class="video-container">
-    <div class="video-panel">
-      <video id="webcamVideo" autoplay playsinline></video>
-      <div class="status-panel">
-        <p id="webcamStatus">Webcam: ❌</p>
-        <label>Mic: <input type="checkbox" id="muteToggle"></label>
-        <label>Volume: <input type="range" id="volumeSlider" min="0" max="1" step="0.01"></label>
-      </div>
-    </div>
-    <div class="video-panel">
-      <video id="remoteVideo" autoplay playsinline></video>
-      <div class="status-panel">
-        <p id="remoteStatus">Remote: ❌</p>
-      </div>
-    </div>
+    <video id="webcamVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
   </div>
 
   <div class="controls">
@@ -36,15 +30,6 @@
     <input id="callInput" placeholder="Enter Call ID" />
     <button id="answerButton" disabled>✅ Answer</button>
     <button id="hangupButton" disabled>❌ Hang Up</button>
-  </div>
-
-  <div class="device-controls">
-    <label for="audioInput">Mic:</label>
-    <select id="audioInput"></select>
-    <label for="audioOutput">Speaker:</label>
-    <select id="audioOutput"></select>
-    <label for="videoInput">Camera:</label>
-    <select id="videoInput"></select>
   </div>
 
   <div class="map" id="map"></div>
@@ -57,6 +42,7 @@
     <div class="pilot-item">Pilot 5 - IP: 203.0.113.9 <span class="status">Maintenance</span></div>
   </div>
 
+  <!-- ✅ Google Maps -->
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBl5lou5LOTc9WKAgAS-tAl6c8OD5uKbc0&callback=initMap">
   </script>
