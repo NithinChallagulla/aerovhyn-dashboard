@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AEROVHYN Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
+  <script type="module" src="main.js" defer></script>
+  <script src="map.js" defer></script>
+</head>
+<body>
+  <header>AEROVHYN DASHBOARD</header>
+
+  <div class="video-container">
+    <video id="webcamVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
+
+  <div class="controls">
+    <button id="webcamButton">🎥 Start Webcam</button>
+    <button id="callButton" disabled>📞 Create Call</button>
+    <input id="callInput" placeholder="Enter Call ID" />
+    <button id="answerButton" disabled>✅ Answer</button>
+    <button id="hangupButton" disabled>❌ Hang Up</button>
+  </div>
+
+  <div class="map" id="map"></div>
+
+  <div class="pilot-list">
+    <div class="pilot-item">Pilot 1 - IP: 192.168.0.101 <span class="status">Active</span></div>
+    <div class="pilot-item">Pilot 2 - IP: 192.168.0.102 <span class="status">Idle</span></div>
+    <div class="pilot-item">Pilot 3 - IP: 10.0.0.55 <span class="status">Offline</span></div>
+    <div class="pilot-item">Pilot 4 - IP: 172.16.254.3 <span class="status">Active</span></div>
+    <div class="pilot-item">Pilot 5 - IP: 203.0.113.9 <span class="status">Maintenance</span></div>
+  </div>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBl5lou5LOTc9WKAgAS-tAl6c8OD5uKbc0&callback=initMap">
+  </script>
+</body>
+</html>
