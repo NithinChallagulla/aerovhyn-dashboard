@@ -7,7 +7,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
-  <script type="module" src="main.js" defer></script>
+
+  <!-- ✅ Firebase SDK via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- ✅ Your Scripts -->
+  <script src="main.js" defer></script>
   <script src="map.js" defer></script>
 </head>
 <body>
@@ -36,6 +42,7 @@
     <div class="pilot-item">Pilot 5 - IP: 203.0.113.9 <span class="status">Maintenance</span></div>
   </div>
 
+  <!-- ✅ Google Maps -->
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBl5lou5LOTc9WKAgAS-tAl6c8OD5uKbc0&callback=initMap">
   </script>
